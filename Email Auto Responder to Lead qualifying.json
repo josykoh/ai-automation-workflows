@@ -1,0 +1,188 @@
+{
+  "name": "WF 2 - Email Auto Responder to Lead qualifying",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ba740dd5-5a4d-4c7b-827d-e70eb98056ac",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "x2ipSOt12IggOL8j",
+          "name": "Thethrivethread 17 June 2026"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.headers.from }}",
+        "subject": "=Re:  {{ $('Gmail Trigger').item.json.headers.subject }}",
+        "emailType": "text",
+        "message": "= {{ $json.output[0].content[0].text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        0
+      ],
+      "id": "91bf5132-2914-4ef8-a203-c05518685d8c",
+      "name": "Send a message",
+      "webhookId": "aead4594-2645-4281-b174-5f69895c3c20",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "x2ipSOt12IggOL8j",
+          "name": "Thethrivethread 17 June 2026"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "GPT-5"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a helpful and intelligent email writing assistant. "
+            },
+            {
+              "content": "=You are an assistant that helps respond to new customer inquiries.\n\nYour tasks:\n1. Read the incoming email carefully.\n2. Determine intent: is this a serious inquiry about services (YES) or spam/unqualified (NO)?\n3. If NO, respond only with: \"DISQUALIFIED\".\n4. If YES, write a polite, professional reply that:\n   - Thanks them for reaching out,\n   - Confirms you understand what they're asking for,\n   - Positions our company as capable of helping,\n   - Invites them to book a call using this link: https://calendly.com/thethrivethread.\n5. Keep the response under 120 words.\n6. Always use clear, professional English.\n7. Use this template: \"\n\nHey {name}, \n\nThanks for reaching out. \n\nI just took a look and we'd be happy to help with {paraphrased version of thing}. \n\nWhat's the calendar looking like tomorrow? \n\nThanks, Jo\""
+            },
+            {
+              "content": "={{ $json.textAsHtml }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "reasoning": {
+            "reasoningOptions": {
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "d37ecfb3-003b-4989-b7ca-0eea0f13d0c5",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "dh8fQjg4LXxcbmQ5",
+          "name": "N8N-Nicktest"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b3606324-4585-4b9c-baa7-ba1eabbeb470",
+              "leftValue": "={{ $json.output[0].content[0].text }}",
+              "rightValue": "DISQUALIFIED",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        576,
+        0
+      ],
+      "id": "48490a50-51bb-4717-beea-c3b81ca5d192",
+      "name": "If"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b6ea18de-b464-4c42-bf5d-199a569cc529",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e6a6909dd0006d5ad15ebde0741e703aa26a1cbac60012a5ad70029f25bb3d9"
+  },
+  "nodeGroups": [],
+  "id": "xOULbOyKHbglZvS1",
+  "tags": []
+}

@@ -1,0 +1,425 @@
+{
+  "name": "WF 3 - Proposal Generator Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -400
+      ],
+      "id": "566ae1df-77ca-4a51-ba88-459828c99c4c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "GPT-5"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a helpful and intelligent proposal generator assistant.  "
+            },
+            {
+              "content": "Your task is to take as input a form that a salesperson submits with a bunch of information about the prospect's needs and their solution and the investment amount, as well as some of their personal details, and then convert this into a JSON format that I will supply below.\n\n {\n  \"proposalName\": \"\",\n  \"prospectFullName\": \"\",\n  \"companyName\": \"\",\n  \"problemTitle\": \"\",\n  \"problemStatement\": \"\",\n  \"solutionTitle\": \"\",\n  \"solutionStatement\": \"\",\n  \"investmentAmount\": \"\"\n}\n\nRules: \n- The problem title and problem statement should accurately reflect both the direct expense that they are currently spending on the problem and the opportunity cost that they are spending not having solved the problem.\n- The problem and solution statement should be two paragraphs,\nno more.\n- When pitching the solution statement, if tools are suggested in the form input, use those tools.\nIf not, hypothesize a way that we can solve the problem using n8n, tools like Google Sheets, Clickup, Typeform, OpenAI, and related systems.\n "
+            },
+            {
+              "content": "={{ $json['Prospect first name. '] }} \n{{ $json['Prospect last name. '] }}\n{{ $json['Prospect email'] }}\n{{ $json['What are their needs? '] }}\n{{ $json['What is our solution?  '] }}\n{{ $json['How much will we charge?'] }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_object"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -128,
+        112
+      ],
+      "id": "239f3991-cd7c-47db-b42c-b68103600b73",
+      "name": "  AI generates proposal variables",
+      "credentials": {
+        "openAiApi": {
+          "id": "dh8fQjg4LXxcbmQ5",
+          "name": "N8N-Nicktest"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Proposal Generator Sales Call Form",
+        "formDescription": "This form generates a proposal that the salesperson can send to a prospect within 5 mins. ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Prospect first name. ",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Prospect last name. ",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Prospect email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What are their needs? ",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What is our solution?  ",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "How much will we charge?",
+              "fieldType": "number",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -336,
+        112
+      ],
+      "id": "00c71ae6-fda1-4403-8fb6-77e1efb4e31b",
+      "name": "Sales person fills form",
+      "webhookId": "f2616adf-f704-40f4-932a-efa2e20ca936"
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "1jEHSi4hpH6mkJZFPdLZx8I8AR351gcVP5tQOI2pPswQ",
+          "mode": "list",
+          "cachedResultName": "TTT Proposal template",
+          "cachedResultUrl": "https://docs.google.com/presentation/d/1jEHSi4hpH6mkJZFPdLZx8I8AR351gcVP5tQOI2pPswQ/edit?usp=drivesdk"
+        },
+        "name": "={{ $json.output[0].content[0].text.proposalName }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        224,
+        112
+      ],
+      "id": "c17cab95-2b2f-4884-8cbc-034f2fc41ca9",
+      "name": "Duplicate proposal template",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "GGQwbsfq7cHbGw1s",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "replaceText",
+        "presentationId": "={{ $json.id }}",
+        "textUi": {
+          "textValues": [
+            {
+              "text": "{{proposalName}}",
+              "replaceText": "={{ $('  AI generates proposal variables').item.json.output[0].content[0].text.proposalName }}"
+            },
+            {
+              "text": "{{prospectFullName}}",
+              "replaceText": "={{ $('  AI generates proposal variables').item.json.output[0].content[0].text.prospectFullName }}"
+            },
+            {
+              "text": "{{companyName}}",
+              "replaceText": "={{ $('  AI generates proposal variables').item.json.output[0].content[0].text.companyName }}"
+            },
+            {
+              "text": "{{problemTitle}}",
+              "replaceText": "={{ $('  AI generates proposal variables').item.json.output[0].content[0].text.problemTitle }}"
+            },
+            {
+              "text": "{{problemStatement}}",
+              "replaceText": "={{ $('  AI generates proposal variables').item.json.output[0].content[0].text.problemStatement }}"
+            },
+            {
+              "text": "{{solutionsTitle}}",
+              "replaceText": "={{ $('  AI generates proposal variables').item.json.output[0].content[0].text.solutionTitle }}"
+            },
+            {
+              "text": "{{solutionsStatement}}",
+              "replaceText": "={{ $('  AI generates proposal variables').item.json.output[0].content[0].text.solutionStatement }}"
+            },
+            {
+              "text": "{{investmentAmount}}",
+              "replaceText": "={{ $('  AI generates proposal variables').item.json.output[0].content[0].text.investmentAmount }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSlides",
+      "typeVersion": 2,
+      "position": [
+        432,
+        112
+      ],
+      "id": "bd3ac9c2-a51c-42f7-8618-020ff3e8a66d",
+      "name": "Update with AI variables",
+      "credentials": {
+        "googleSlidesOAuth2Api": {
+          "id": "HntFDHMOwWO237U2",
+          "name": "Google Slides OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Google slides AI Proposal Generator\n## This flow generates proposals using free Google Slides solution.",
+        "height": 400,
+        "width": 1088
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -384,
+        -48
+      ],
+      "typeVersion": 1,
+      "id": "f374906c-2e12-4d8a-8cef-5930ed6df977",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "GPT-5"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a helpful and intelligent writing assistant. "
+            },
+            {
+              "content": "Your task is to generate a proposal using input data from a form. This proposal should be highly customized, specific, and high-quality, considering we're going to be sending it immediately after you're done.\nContext: we are an automation/no-code agency that develops systems revolving around growth, revenue ops, etc.\nThe proposal template we're using has many fields. You must return these fields in one\nJSON object.\nUse this format:\nit\n)\n\"proposalTitle\": \"\"\n\"descriptionName\"：\"\".\n\"problemTitle\": \"\"\n\"oneParagraphProblemSummary\": \"\"\n\"solutionTitle\": \"\",\n\"solutionText\": \"\"\n\"scopeOne\": \"\"\n\"scope Two\": \"\"\n\"scopeThree\": \"\"\n\"scopeFour\": \"\"\n\"scopeFive\": \"'\"\n\"timelineOne\":\n\"timelineTwo\"： \"m\n\"timelineThree\": \"\"\n\"timelineFour\": \"'\"\n}\nRules:\n1. Use a spartan, casual tone of voice.\n2. Be to-the-point but professional-assume you're writing to a sophisticated audience.\n3. Ensure that all fields are filled out. Do not miss a field or leave any variables empty.\n4. For oneParagraphProblemSummary and solutionText, make sure to number the responses (usually 3, make sure they're inside of the string). "
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -112,
+        -400
+      ],
+      "id": "5983d996-a3f0-4e19-8c6b-5f5f717988d6",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "dh8fQjg4LXxcbmQ5",
+          "name": "N8N-Nicktest"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pandadoc.com/public/v1/documents",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        240,
+        -400
+      ],
+      "id": "32e8ac04-983f-4354-87de-c07eac71043c",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {
+    "When clicking ‘Execute workflow’": [
+      {
+        "json": {
+          "Prospect first name. ": "Pete",
+          "Prospect last name. ": "Belle",
+          "Prospect email": "pete@bells.com",
+          "What are their needs? ": "Pete runs a local Bell manufacturer. He's finding it very difficult to get new clients, so he's looking for some automated outbound lead generation thing.",
+          "What is our solution? ": "our current idea is we're going to sell these Bells to primarily Bell wholesalers, but we're also going to go direct to retailer, offering them a sample of\r\n500 Bells through cold email. So our system is predominantly going to be a mixture of cold email, cold DM to wholesalers and retailers, and outbound",
+          "How much will we charge?": 4000,
+          "submittedAt": "2026-06-22T15:30:40.176+08:00",
+          "formMode": "test"
+        }
+      }
+    ],
+    "  AI generates proposal variables": [
+      {
+        "json": {
+          "output": [
+            {
+              "id": "msg_01ac21223b7011b0006a38e916aca081a3897555ef3f7ba30e",
+              "type": "message",
+              "status": "completed",
+              "content": [
+                {
+                  "type": "output_text",
+                  "annotations": [],
+                  "logprobs": [],
+                  "text": {
+                    "proposalName": "Automated Outbound Lead Generation Proposal – Bells",
+                    "prospectFullName": "Pete Belle",
+                    "companyName": "Bells",
+                    "problemTitle": "Manual Outbound Is Consuming Time and Budget While Leaving Wholesale/Retail Revenue on the Table",
+                    "problemStatement": "Right now, new client acquisition relies on manual prospecting and ad‑hoc outreach, which burns high‑value time and labor without producing a predictable pipeline. Sourcing lists, drafting one‑off emails/DMs, and following up by hand creates direct expenses in hours and tools while also risking poor deliverability and inconsistent messaging. The lack of a centralized system means duplicated effort, slow iteration on what works, and limited visibility into response rates and conversion, all of which inflate customer acquisition costs.\n\nMeanwhile, the opportunity cost is compounding: wholesalers and retailers who could place meaningful orders aren’t being engaged at scale, sample offers aren’t reaching enough qualified buyers, and competitors are capturing relationships first. Idle production capacity, delayed cash flow from bulk orders, and missed feedback loops on the 500‑bell sample offer reduce learning velocity and market penetration, keeping revenue lower and less predictable than it should be.",
+                    "solutionTitle": "Automated Cold Email and DM Engine Using n8n, Google Sheets, Typeform, OpenAI, and ClickUp",
+                    "solutionStatement": "We will implement an automated outbound system that targets bell wholesalers first and retailers second, orchestrated in n8n. A master Google Sheet will serve as the single source of truth for lead lists, statuses, and outcomes; n8n will enrich and validate emails, segment leads (wholesaler vs. retailer), and trigger sequenced cold emails with staggered sending for deliverability. OpenAI will generate personalized first lines and value propositions tailored to each segment, referencing the 500‑bell sample offer for retailers and bulk pricing/value for wholesalers. For cold DMs, n8n will prepare compliant, personalized draft messages and schedule reminders/tasks for sending and responses, while maintaining opt‑out handling and logging. ClickUp will manage tasks and SLAs for replies, call scheduling, and deal progression, ensuring nothing slips.\n\nA dedicated Typeform will capture interest and sample requests, automatically writing responses back to Google Sheets and creating ClickUp tasks for fulfillment and follow‑ups. n8n will track replies, auto‑advance prospects through multi‑step follow‑ups, notify the team of hot leads, and produce weekly dashboards on deliverability, reply rates, booked calls, and cost per opportunity. We will A/B test subject lines and copy by segment, refine the 500‑bell sample positioning, and scale send volumes methodically to maintain domain health—turning outbound from a manual time sink into a predictable, data‑driven acquisition engine.",
+                    "investmentAmount": "4000"
+                  }
+                }
+              ],
+              "role": "assistant"
+            }
+          ]
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Sales person fills form": [
+      {
+        "json": {
+          "Prospect first name. ": "Pete",
+          "Prospect last name. ": "Belle",
+          "Prospect email": "pete@bells.com",
+          "What are their needs? ": "Pete runs a local Bell manufacturer. He's finding it very difficult to get new clients, so he's looking for some automated outbound lead generation thing.",
+          "What is our solution?  ": "our current idea is we're going to sell these Bells to primarily Bell wholesalers, but we're also going to go direct to retailer, offering them a sample of\r\n500 Bells through cold email. So our system is predominantly going to be a mixture of cold email, cold DM to wholesalers and retailers, and outbound",
+          "How much will we charge?": 4000,
+          "submittedAt": "2026-06-22T15:30:40.176+08:00",
+          "formMode": "test"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Message a model": [
+      {
+        "json": {
+          "output": [
+            {
+              "id": "msg_09461c6de544abda006a38f720f048819294e8ba9e1f30877f",
+              "type": "message",
+              "status": "completed",
+              "content": [
+                {
+                  "type": "output_text",
+                  "annotations": [],
+                  "logprobs": [],
+                  "text": "{\n  \"proposalTitle\": \"Revenue Ops Automation: Lead-to-Cash System (No‑Code)\",\n  \"descriptionName\": \"RevOps + Growth Automation Build\",\n  \"problemTitle\": \"Current state and gaps\",\n  \"oneParagraphProblemSummary\": \"1) Disconnected tools and manual handoffs are leaking leads and slowing speed-to-lead. 2) Reporting is stitched together in spreadsheets, blocking real-time decisions and accurate forecasting. 3) Inconsistent lifecycle definitions and routing create friction between Marketing, Sales, and CS, hurting conversion and renewals.\",\n  \"solutionTitle\": \"Proposed solution and outcomes\",\n  \"solutionText\": \"1) Stand up a unified RevOps backbone: clean data model, consolidated integrations, and clear lifecycle states from first touch to renewal. 2) Build no-code automations for scoring, routing, SLAs, playbooks, and alerts to speed up handoffs and boost conversion. 3) Ship decision-grade dashboards for funnel, pipeline health, and forecast so teams can act in real time.\",\n  \"scopeOne\": \"RevOps discovery and blueprint: audit stack, map lifecycle (MQL→SQL→Opportunity→Customer→Renewal), define SLAs, ICP/fit rules, and data schema.\",\n  \"scope Two\": \"Data and integrations: bi-directional sync across CRM, marketing automation, product analytics, and billing; enrichment and de-dupe; field normalization.\",\n  \"scopeThree\": \"Lifecycle and routing: lead/contact/account scoring, owner assignment, round-robin and territory rules, queue management, and SLA breach alerts.\",\n  \"scopeFour\": \"No-code automations: campaign/member status updates, opportunity stage workflows, onboarding/expansion/renewal plays, and task/Slack notifications.\",\n  \"scopeFive\": \"Analytics and enablement: funnel and cohort dashboards, forecast and pipeline hygiene views, documentation, and live training with handover.\",\n  \"timelineOne\": \"Weeks 1–2: Discovery, stack audit, requirements, and RevOps blueprint signed off.\",\n  \"timelineTwo\": \"Weeks 2–4: Integrations live, data model finalized, enrichment and de-dupe in place.\",\n  \"timelineThree\": \"Weeks 4–6: Scoring, routing, SLAs, and core no-code automations built and QA’d.\",\n  \"timelineFour\": \"Weeks 6–8: Dashboards, UAT, training, and go-live with hypercare.\"\n}"
+                }
+              ],
+              "role": "assistant"
+            }
+          ]
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Sales person fills form": {
+      "main": [
+        [
+          {
+            "node": "  AI generates proposal variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "  AI generates proposal variables": {
+      "main": [
+        [
+          {
+            "node": "Duplicate proposal template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplicate proposal template": {
+      "main": [
+        [
+          {
+            "node": "Update with AI variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8d06176d-7dd4-4700-8b94-f11550e93235",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e6a6909dd0006d5ad15ebde0741e703aa26a1cbac60012a5ad70029f25bb3d9"
+  },
+  "nodeGroups": [],
+  "id": "soV7yCGRH7yzES46",
+  "tags": []
+}

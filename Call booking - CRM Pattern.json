@@ -1,0 +1,505 @@
+{
+  "name": "WF4 - call booking - CRM Pattern",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "c1484816-932c-455b-8b6e-a064e76acfe4",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d3f31867-2c60-4092-9834-fb5382bb791b",
+      "name": "New booking",
+      "webhookId": "c1484816-932c-455b-8b6e-a064e76acfe4"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "team": "90182808291",
+        "space": "901811536289",
+        "folder": "901814801178",
+        "list": "901818983781",
+        "filters": {
+          "customFieldsUi": {
+            "customFieldsValues": [
+              {
+                "fieldId": "=973b3e2a-dd5e-4bd8-b075-623e92af492d",
+                "value": "={{ $json.body.payload.attendees[0].email }}"
+              },
+              {
+                "fieldId": "=992d4b83-292c-4db9-bfc8-948f57aa575c"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "87383cd7-5b8c-49fa-bf50-be73281fa153",
+      "name": "Get many tasks",
+      "alwaysOutputData": true,
+      "credentials": {
+        "clickUpApi": {
+          "id": "RtkQ703FKCFpG38s",
+          "name": "ClickUp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8ae17c40-cd4a-4285-8c9c-cfec0b3acd59",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "dbd7869f-ddcd-4485-ba08-52c0546e8505",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "content": "## {{ $json.id }}\n- **$json** is always an object — even when ClickUp finds nothing, n8n still passes {} (an empty object). An object is never \"empty\" in the string sense, hence the type error.\n- **$json.id** is a string (or undefined) — it only has a value when a real ClickUp task was found. So \"is empty\" works correctly on it.",
+        "height": 272,
+        "width": 384
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        304,
+        -976
+      ],
+      "typeVersion": 1,
+      "id": "1de76d8a-2aab-438f-bf6f-1cbfa34b53c8",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "team": "90182808291",
+        "space": "901811536289",
+        "folder": "901814801178",
+        "list": "901818983781",
+        "name": "={{ $('New booking').item.json.body.payload.attendees[0].name }}",
+        "additionalFields": {
+          "assignees": [
+            312739892
+          ],
+          "customFieldsJson": "=[\n  {\n    \"id\": \"973b3e2a-dd5e-4bd8-b075-623e92af492d\",\n    \"value\": \"{{ $('New booking').item.json.body.payload.attendees[0].email }}\"\n  },\n  {\n    \"id\": \"992d4b83-292c-4db9-bfc8-948f57aa575c\",\n    \"value\": \"{{ $('New booking').item.json.body.payload.metadata.videoCallUrl }}\"\n  }\n]",
+          "dueDate": "={{ $now  }}",
+          "status": "meeting booked"
+        }
+      },
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        624,
+        -96
+      ],
+      "id": "92e2ee77-d3c9-49a9-971e-f0c2f8fd4913",
+      "name": "Create a task",
+      "credentials": {
+        "clickUpApi": {
+          "id": "RtkQ703FKCFpG38s",
+          "name": "ClickUp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BDHU27YB0",
+          "mode": "list",
+          "cachedResultName": "sales"
+        },
+        "text": "=Hey! {{ $json.name }} just booked a call a moment ago. \nYou can find the CRM details here: {{ $json.url }} \n\nThe meeting URL is: {{ $json.custom_fields[4].value }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        832,
+        -96
+      ],
+      "id": "c06353de-223e-4bb7-8fcb-7561955954c9",
+      "name": "Send a message",
+      "webhookId": "bded91bf-8636-43c6-b093-a9651b8cda32",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "ZfV6ID0EGPoiE9vr",
+          "name": "Slack OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "team": "90182808291",
+        "events": [
+          "taskStatusUpdated"
+        ],
+        "filters": {
+          "folderId": "901814801178"
+        }
+      },
+      "type": "n8n-nodes-base.clickUpTrigger",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        320
+      ],
+      "id": "db20bb30-d4f8-449a-b43e-6fb46d568feb",
+      "name": "ClickUp Trigger",
+      "webhookId": "11f76354-cd57-4f23-813b-d1287fdc0619",
+      "credentials": {
+        "clickUpApi": {
+          "id": "RtkQ703FKCFpG38s",
+          "name": "ClickUp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "get",
+        "id": "={{ $json.task_id }}"
+      },
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        192,
+        320
+      ],
+      "id": "95c0b257-4a03-4769-8f9d-7bd0bc7fd4bc",
+      "name": "Get a task",
+      "credentials": {
+        "clickUpOAuth2Api": {
+          "id": "hmRc5sGaPGB0AEAB",
+          "name": "ClickUp account 2 (Change of status in CRM"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.custom_fields[3].value }}",
+        "subject": "=Hey  {{ $json.name }}, welcome aboard! \n\nWe are really excited to have you and I want to personally thank you for filling up the invoice and the payment detail so promptly.  \n\nYou next steps are booking a kick off call. \n\nOn it we will give you a workflow audit before giving you everything you need in order to monitor and watch you project progress etc. \n\nThank you and talk to you soon,\nJo",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        400,
+        320
+      ],
+      "id": "b7ff5ebf-88f9-403a-997f-cde54223e1ef",
+      "name": "Send a message1",
+      "webhookId": "e0beb8df-09ea-4243-bdde-1161902892dd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "x2ipSOt12IggOL8j",
+          "name": "Thethrivethread 17 June 2026"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "New booking": [
+      {
+        "json": {
+          "headers": {
+            "host": "thethrivethread.app.n8n.cloud",
+            "user-agent": "node",
+            "content-length": "2762",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "*",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "5.60.65.64",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "a121db05dcddea42-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "sec-fetch-mode": "cors",
+            "x-cal-signature-256": "no-secret-provided",
+            "x-cal-webhook-version": "2021-10-20",
+            "x-forwarded-for": "5.60.65.64, 104.23.211.61",
+            "x-forwarded-host": "thethrivethread.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-swc-5-76c9d77478-ltfv5",
+            "x-is-trusted": "yes",
+            "x-real-ip": "5.60.65.64"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "triggerEvent": "BOOKING_CREATED",
+            "createdAt": "2026-06-27T04:54:44.453Z",
+            "payload": {
+              "bookerUrl": "https://cal.com",
+              "title": "15 min meeting between The Thrive Thread and Wonie",
+              "startTime": "2026-07-16T01:00:00.000Z",
+              "endTime": "2026-07-16T01:15:00.000Z",
+              "additionalNotes": "Leads scrapping, CRM building and content repurposing system creation",
+              "type": "15min",
+              "description": "Leads scrapping, CRM building and content repurposing system creation",
+              "eventTypeId": 6104474,
+              "hideCalendarNotes": false,
+              "hideCalendarEventDetails": false,
+              "hideOrganizerEmail": false,
+              "schedulingType": null,
+              "seatsPerTimeSlot": null,
+              "seatsShowAttendees": true,
+              "seatsShowAvailabilityCount": true,
+              "customReplyToEmail": null,
+              "disableRescheduling": false,
+              "disableReschedulingScope": "HOST_AND_ATTENDEE",
+              "disableCancelling": false,
+              "disableCancellingScope": "HOST_AND_ATTENDEE",
+              "organizer": {
+                "id": 2852707,
+                "name": "The Thrive Thread",
+                "email": "thethrivethread@gmail.com",
+                "username": "the-thrive-thread-h1ies2",
+                "timeZone": "Asia/Singapore",
+                "language": {
+                  "locale": "en"
+                },
+                "timeFormat": "h:mma",
+                "utcOffset": 480
+              },
+              "attendees": [
+                {
+                  "name": "Woniey",
+                  "email": "Wonieee@Wonn.com",
+                  "timeZone": "Asia/Singapore",
+                  "language": {
+                    "locale": "en"
+                  },
+                  "phoneNumber": null,
+                  "bookingSeat": null,
+                  "utcOffset": 480,
+                  "firstName": "Woniey",
+                  "lastName": ""
+                }
+              ],
+              "customInputs": {},
+              "responses": {
+                "name": {
+                  "label": "your_name",
+                  "value": "Woniey"
+                },
+                "email": {
+                  "label": "email_address",
+                  "value": "Wonieee@Wonn.com"
+                },
+                "notes": {
+                  "label": "notes",
+                  "value": "Leads scrapping, CRM building and content repurposing system creation"
+                },
+                "guests": {
+                  "label": "guests",
+                  "value": []
+                },
+                "location": {
+                  "label": "location",
+                  "value": {
+                    "value": "integrations:google:meet",
+                    "optionValue": ""
+                  }
+                }
+              },
+              "userFieldsResponses": {},
+              "location": "integrations:google:meet",
+              "iCalUID": "qkijDB4ccQdixsGjss7w5g@Cal.com",
+              "iCalSequence": 0,
+              "requiresConfirmation": false,
+              "oneTimePassword": null,
+              "platformClientId": "",
+              "platformRescheduleUrl": "",
+              "platformCancelUrl": "",
+              "platformBookingUrl": "",
+              "uid": "qkijDB4ccQdixsGjss7w5g",
+              "organizationId": null,
+              "hashedLink": null,
+              "cancellationReason": null,
+              "rejectionReason": null,
+              "hideBranding": false,
+              "videoCallData": {
+                "type": "google_meet_video",
+                "id": "",
+                "password": "",
+                "url": "https://meet.google.com/pku-spbj-dbi"
+              },
+              "appsStatus": [
+                {
+                  "appName": "Google Calendar",
+                  "type": "google_calendar",
+                  "success": 1,
+                  "failures": 0,
+                  "errors": []
+                },
+                {
+                  "appName": "Google Meet",
+                  "type": "google_meet_video",
+                  "success": 1,
+                  "failures": 0,
+                  "errors": []
+                }
+              ],
+              "destinationCalendar": [
+                {
+                  "id": 1388800,
+                  "integration": "google_calendar",
+                  "externalId": "thethrivethread@gmail.com",
+                  "primaryEmail": "thethrivethread@gmail.com",
+                  "userId": 2852707,
+                  "credentialId": 2246551
+                }
+              ],
+              "bookingId": 21735382,
+              "status": "ACCEPTED",
+              "eventTitle": "15 min meeting",
+              "eventDescription": "",
+              "price": 0,
+              "currency": "usd",
+              "length": 15,
+              "assignmentReason": [],
+              "metadata": {
+                "videoCallUrl": "https://meet.google.com/pku-spbj-dbi"
+              }
+            }
+          },
+          "webhookUrl": "https://thethrivethread.app.n8n.cloud/webhook-test/c1484816-932c-455b-8b6e-a064e76acfe4",
+          "executionMode": "test"
+        }
+      }
+    ],
+    "Get many tasks": [
+      {
+        "json": {},
+        "pairedItem": [
+          {
+            "item": 0,
+            "input": 0
+          }
+        ]
+      }
+    ]
+  },
+  "connections": {
+    "New booking": {
+      "main": [
+        [
+          {
+            "node": "Get many tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many tasks": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create a task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a task": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ClickUp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a task": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6dd6d0a7-e9ca-4f75-8dcf-7e04f0547b11",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e6a6909dd0006d5ad15ebde0741e703aa26a1cbac60012a5ad70029f25bb3d9"
+  },
+  "nodeGroups": [],
+  "id": "XrFk8Tk9lrJBA4NP",
+  "tags": []
+}
